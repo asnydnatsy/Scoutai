@@ -1,0 +1,374 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ASEAN Shield — Command Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0A0F1A;
+    --panel:#111826;
+    --panel-2:#0D1420;
+    --line:#1F2B40;
+    --line-soft:#182234;
+    --text:#E7EDF5;
+    --muted:#7C8CA6;
+    --dim:#4B5A73;
+    --teal:#2DD4BF;
+    --teal-dim:#0F3D38;
+    --amber:#F5A623;
+    --amber-dim:#3D2E0F;
+    --red:#EF4444;
+    --red-dim:#3D1414;
+    --gray:#5B6B84;
+    --gray-dim:#1A2231;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--void);color:var(--text);font-family:'IBM Plex Sans',sans-serif;height:100%;overflow:hidden;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  #app{display:flex;flex-direction:column;height:100vh;}
+ 
+  /* HEADER */
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel-2);flex-shrink:0;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{width:28px;height:28px;border:1.5px solid var(--teal);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;}
+  .brand-mark::after{content:'';width:10px;height:10px;background:var(--teal);border-radius:2px;animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .brand-text{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;letter-spacing:.5px;}
+  .brand-text span{color:var(--teal);}
+  .brand-sub{font-size:10.5px;color:var(--muted);letter-spacing:1.5px;margin-top:1px;}
+  .header-right{display:flex;align-items:center;gap:22px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+  .live-dot{display:inline-block;width:6px;height:6px;background:var(--teal);border-radius:50%;margin-right:6px;animation:pulse 1.5s ease-in-out infinite;}
+ 
+  /* LAYOUT */
+  .grid{flex:1;display:grid;grid-template-columns:280px 1fr 320px;grid-template-rows:1fr 130px;overflow:hidden;}
+ 
+  /* QUEUE */
+  .queue{grid-row:1/2;border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);}
+  .panel-title{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--muted);padding:14px 16px 10px;text-transform:uppercase;}
+  .filters{display:flex;gap:6px;padding:0 12px 12px;flex-wrap:wrap;}
+  .filter-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 9px;border-radius:4px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;letter-spacing:.5px;}
+  .filter-btn.active{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+  .queue-list{flex:1;overflow-y:auto;padding:0 8px 12px;}
+  .cand{padding:10px 10px;border-radius:6px;margin-bottom:4px;cursor:pointer;border:1px solid transparent;transition:.15s;}
+  .cand:hover{background:var(--line-soft);}
+  .cand.selected{background:var(--line-soft);border-color:var(--teal);}
+  .cand-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+  .cand-id{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+  .cand-score{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}
+  .cand-loc{font-size:11px;color:var(--muted);}
+  .tier-pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.5px;padding:2px 6px;border-radius:3px;margin-top:5px;text-transform:uppercase;}
+ 
+  /* DETAIL */
+  .detail{grid-row:1/2;overflow-y:auto;padding:20px 26px;background:var(--void);}
+  .detail-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
+  .detail-title{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;}
+  .detail-loc{color:var(--muted);font-size:12.5px;margin-top:4px;}
+  .score-badge{text-align:right;}
+  .score-num{font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:700;line-height:1;}
+  .score-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px;text-transform:uppercase;}
+ 
+  .section{margin-bottom:24px;}
+  .section-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+ 
+  .signal-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .signal-name{width:130px;font-size:12px;color:var(--text);}
+  .signal-bar-track{flex:1;height:8px;background:var(--line-soft);border-radius:4px;overflow:hidden;}
+  .signal-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+  .signal-val{width:60px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+ 
+  .bonus-line{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--teal);padding:8px 12px;background:var(--teal-dim);border-radius:6px;border:1px solid #14544c;margin-top:4px;}
+ 
+  .timeline{border-left:1px solid var(--line);padding-left:16px;}
+  .tl-item{position:relative;padding-bottom:16px;}
+  .tl-item::before{content:'';position:absolute;left:-20.5px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--dim);border:2px solid var(--void);}
+  .tl-item.hit::before{background:var(--teal);}
+  .tl-date{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);}
+  .tl-text{font-size:12.5px;margin-top:2px;}
+ 
+  .btn{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.5px;padding:11px 18px;border-radius:6px;border:1px solid var(--teal);background:var(--teal-dim);color:var(--teal);cursor:pointer;text-transform:uppercase;width:100%;text-align:center;}
+  .btn:hover{background:#164a43;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+ 
+  .packet{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--panel);display:none;}
+  .packet.show{display:block;}
+  .packet-row{display:flex;justify-content:space-between;font-size:11.5px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+  .packet-row:last-child{border-bottom:none;}
+  .packet-label{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10.5px;}
+ 
+  /* MAP */
+  .mappanel{grid-row:1/2;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+  .mapwrap{flex:1;position:relative;padding:10px;}
+  svg{width:100%;height:100%;}
+ 
+  /* FEED */
+  .feed{grid-column:1/4;border-top:1px solid var(--line);background:var(--panel-2);padding:10px 20px;overflow-y:auto;}
+  .feed-item{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);padding:3px 0;opacity:0;animation:fadein .4s forwards;}
+  @keyframes fadein{to{opacity:1;}}
+  .feed-item .t{color:var(--dim);margin-right:10px;}
+  .feed-item .tag{padding:1px 6px;border-radius:3px;font-size:9.5px;margin-right:8px;}
+ 
+  ::-webkit-scrollbar{width:7px;height:7px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body>
+<div id="app">
+ 
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-text">ASEAN <span>SHIELD</span></div>
+        <div class="brand-sub">SCAM COMPOUND DETECTION CONSOLE</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div><span class="live-dot"></span>LIVE — MEKONG REGION</div>
+      <div id="clock">UPTIME 00:00:00</div>
+      <div id="candCount">7 CANDIDATES TRACKED</div>
+    </div>
+  </header>
+ 
+  <div class="grid">
+ 
+    <!-- QUEUE -->
+    <div class="queue">
+      <div class="panel-title">Candidate Queue</div>
+      <div class="filters" id="filters"></div>
+      <div class="queue-list" id="queueList"></div>
+    </div>
+ 
+    <!-- DETAIL -->
+    <div class="detail" id="detail"></div>
+ 
+    <!-- MAP -->
+    <div class="mappanel">
+      <div class="panel-title">Region Overview</div>
+      <div class="mapwrap"><svg id="mapSvg" viewBox="0 0 300 380"></svg></div>
+    </div>
+ 
+    <!-- FEED -->
+    <div class="feed" id="feed"></div>
+  </div>
+</div>
+ 
+<script>
+/* ---------- DATA ---------- */
+const TIERS = {
+  low:{label:'Low',color:'var(--gray)',dim:'var(--gray-dim)',range:[0,39]},
+  medium:{label:'Medium',color:'#8AB4F8',dim:'#132338',range:[40,69]},
+  high:{label:'High',color:'var(--amber)',dim:'var(--amber-dim)',range:[70,89]},
+  critical:{label:'Critical',color:'var(--red)',dim:'var(--red-dim)',range:[90,100]}
+};
+function tierOf(score){
+  if(score>=90) return 'critical';
+  if(score>=70) return 'high';
+  if(score>=40) return 'medium';
+  return 'low';
+}
+ 
+let candidates = [
+  {id:'PP-07', name:'Poipet Sector 7', x:70, y:110, satellite:26, telecom:8, testimony:38, predep:10,
+   log:[['Day 1','Satellite flags new dormitory cluster on former rice field',true],
+        ['Day 19','Survivor testimony geolocates within 2km',true],
+        ['Day 24','SIM registration spike confirmed in district',true]]},
+  {id:'SVK-03', name:'Sihanoukville Zone 3', x:95, y:270, satellite:22, telecom:14, testimony:0, predep:8,
+   log:[['Day 1','Perimeter wall + rapid construction detected',true],
+        ['Day 30','No corroborating signal yet — remains on watchlist',false]]},
+  {id:'OSM-02', name:"O'Smach Border", x:40, y:60, satellite:30, telecom:18, testimony:40, predep:22,
+   log:[['Day 1','Satellite: casino-adjacent dormitory blocks',true],
+        ['Day 8','Survivor testimony matches casino/road layout',true],
+        ['Day 15','Crypto wallet cluster linked to site',true],
+        ['Day 22','Pre-departure reports name same recruiter channel',true]]},
+  {id:'KPT-11', name:'Kampot Rural', x:120, y:230, satellite:12, telecom:0, testimony:0, predep:6,
+   log:[['Day 1','Minor construction flagged, low confidence',false]]},
+  {id:'BVT-05', name:'Bavet Crossing', x:180, y:150, satellite:24, telecom:16, testimony:0, predep:0,
+   log:[['Day 1','Wall + dormitory pattern detected',true],
+        ['Day 12','Telecom anomaly in same district',true]]},
+  {id:'KKG-01', name:'Koh Kong Coast', x:35, y:200, satellite:8, telecom:0, testimony:0, predep:0,
+   log:[['Day 1','Candidate logged, minimal signal so far',false]]},
+  {id:'PST-09', name:'Pursat Expansion', x:110, y:170, satellite:28, telecom:12, testimony:0, predep:24,
+   log:[['Day 1','~20 new structures detected in under a year',true],
+        ['Day 33','Multiple pre-departure reports cite same job ad',true]]},
+];
+ 
+candidates.forEach(c=>{
+  c.total = Math.min(100, c.satellite+c.telecom+c.testimony+c.predep);
+  c.tier = tierOf(c.total);
+});
+ 
+let selectedId = candidates[0].id;
+let activeFilter = 'all';
+ 
+/* ---------- RENDER: FILTERS ---------- */
+const filtersEl = document.getElementById('filters');
+const filterDefs = [['all','All'],['low','Low'],['medium','Medium'],['high','High'],['critical','Critical']];
+filtersEl.innerHTML = filterDefs.map(([k,l])=>`<button class="filter-btn ${k===activeFilter?'active':''}" data-f="${k}">${l}</button>`).join('');
+filtersEl.addEventListener('click', e=>{
+  const b = e.target.closest('.filter-btn'); if(!b) return;
+  activeFilter = b.dataset.f;
+  document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active', x===b));
+  renderQueue(); renderMap();
+});
+ 
+/* ---------- RENDER: QUEUE ---------- */
+function renderQueue(){
+  const list = document.getElementById('queueList');
+  const filtered = candidates.filter(c=>activeFilter==='all'||c.tier===activeFilter)
+                              .sort((a,b)=>b.total-a.total);
+  list.innerHTML = filtered.map(c=>{
+    const t = TIERS[c.tier];
+    return `<div class="cand ${c.id===selectedId?'selected':''}" data-id="${c.id}">
+      <div class="cand-top">
+        <span class="cand-id mono">${c.id}</span>
+        <span class="cand-score mono" style="color:${t.color}">${c.total}</span>
+      </div>
+      <div class="cand-loc">${c.name}</div>
+      <span class="tier-pill mono" style="color:${t.color};background:${t.dim};border:1px solid ${t.color}44">${t.label}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('candCount').textContent = candidates.length+' CANDIDATES TRACKED';
+  list.querySelectorAll('.cand').forEach(el=>{
+    el.addEventListener('click', ()=>{ selectedId = el.dataset.id; renderQueue(); renderDetail(); renderMap(); });
+  });
+}
+ 
+/* ---------- RENDER: DETAIL ---------- */
+function renderDetail(){
+  const c = candidates.find(x=>x.id===selectedId);
+  const t = TIERS[c.tier];
+  const signals = [
+    ['Satellite scan', c.satellite, 30, 'var(--teal)'],
+    ['Telecom & financial', c.telecom, 20, '#8AB4F8'],
+    ['Survivor testimony', c.testimony, 40, 'var(--amber)'],
+    ['Pre-departure reports', c.predep, 25, '#C084FC'],
+  ];
+  const sourcesHit = signals.filter(s=>s[1]>0).length;
+  const el = document.getElementById('detail');
+  el.innerHTML = `
+    <div class="detail-head">
+      <div>
+        <div class="detail-title mono">${c.id}</div>
+        <div class="detail-loc">${c.name} · candidate location</div>
+      </div>
+      <div class="score-badge">
+        <div class="score-num mono" style="color:${t.color}">${c.total}</div>
+        <div class="score-label" style="color:${t.color}">${t.label} confidence</div>
+      </div>
+    </div>
+ 
+    <div class="section">
+      <div class="section-h">Signal Breakdown</div>
+      ${signals.map(s=>`
+        <div class="signal-row">
+          <div class="signal-name">${s[0]}</div>
+          <div class="signal-bar-track"><div class="signal-bar-fill" style="width:${(s[1]/s[2])*100}%;background:${s[3]}"></div></div>
+          <div class="signal-val mono">${s[1]}/${s[2]}</div>
+        </div>`).join('')}
+      ${sourcesHit>=2?`<div class="bonus-line">✓ Cross-source correlation: ${sourcesHit} independent signals agree on this location</div>`:''}
+    </div>
+ 
+    <div class="section">
+      <div class="section-h">Detection Timeline</div>
+      <div class="timeline">
+        ${c.log.map(l=>`<div class="tl-item ${l[2]?'hit':''}"><div class="tl-date mono">${l[0]}</div><div class="tl-text">${l[1]}</div></div>`).join('')}
+      </div>
+    </div>
+ 
+    <div class="section">
+      <div class="section-h">Field Action</div>
+      <button class="btn" id="packetBtn" ${c.total<70?'disabled':''}>
+        ${c.total<70?'Below review threshold':'Generate Evidence Packet'}
+      </button>
+      <div class="packet" id="packet">
+        <div class="packet-row"><span class="packet-label">LOCATION</span><span>${c.name} (candidate ${c.id})</span></div>
+        <div class="packet-row"><span class="packet-label">CONFIDENCE</span><span style="color:${t.color}">${c.total}/100 — ${t.label}</span></div>
+        <div class="packet-row"><span class="packet-label">CONFIRMING SIGNALS</span><span>${sourcesHit} independent sources</span></div>
+        <div class="packet-row"><span class="packet-label">ROUTED TO</span><span>Regional anti-trafficking task force</span></div>
+        <div class="packet-row"><span class="packet-label">STATUS</span><span style="color:var(--teal)">Pending analyst sign-off</span></div>
+      </div>
+    </div>
+  `;
+  const btn = document.getElementById('packetBtn');
+  if(btn && !btn.disabled){
+    btn.addEventListener('click', ()=>{
+      document.getElementById('packet').classList.toggle('show');
+    });
+  }
+}
+ 
+/* ---------- RENDER: MAP ---------- */
+function renderMap(){
+  const svg = document.getElementById('mapSvg');
+  const filtered = candidates.filter(c=>activeFilter==='all'||c.tier===activeFilter);
+  let dots = candidates.map(c=>{
+    const t = TIERS[c.tier];
+    const dim = filtered.includes(c) ? 1 : 0.15;
+    const isSel = c.id===selectedId;
+    return `<g opacity="${dim}" style="cursor:pointer" data-id="${c.id}">
+      ${isSel?`<circle cx="${c.x}" cy="${c.y}" r="13" fill="none" stroke="${t.color}" stroke-width="1"><animate attributeName="r" values="9;15;9" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0;0.8" dur="2s" repeatCount="indefinite"/></circle>`:''}
+      <circle cx="${c.x}" cy="${c.y}" r="6" fill="${t.color}" stroke="${isSel?'#fff':'transparent'}" stroke-width="1.5"/>
+      <text x="${c.x+10}" y="${c.y+3}" font-family="IBM Plex Mono" font-size="8" fill="var(--muted)">${c.id}</text>
+    </g>`;
+  }).join('');
+ 
+  // simple grid backdrop to suggest terrain / border zones
+  let grid = '';
+  for(let i=0;i<=300;i+=30) grid += `<line x1="${i}" y1="0" x2="${i}" y2="380" stroke="var(--line-soft)" stroke-width="0.5"/>`;
+  for(let j=0;j<=380;j+=30) grid += `<line x1="0" y1="${j}" x2="300" y2="${j}" stroke="var(--line-soft)" stroke-width="0.5"/>`;
+ 
+  svg.innerHTML = `<rect x="0" y="0" width="300" height="380" fill="var(--panel-2)"/>${grid}${dots}`;
+  svg.querySelectorAll('[data-id]').forEach(g=>{
+    g.addEventListener('click', ()=>{ selectedId = g.dataset.id; renderQueue(); renderDetail(); renderMap(); });
+  });
+}
+ 
+/* ---------- FEED SIMULATION ---------- */
+const feedEvents = [
+  ['SAT','var(--teal)','New construction pass complete — Bavet Crossing sector'],
+  ['TEL','#8AB4F8','SIM registration anomaly logged — Kampot district'],
+  ['HUM','var(--amber)','Pre-departure report submitted — recruiter channel flagged'],
+  ['SYS','var(--muted)','Re-scan cycle complete — 7 candidates updated'],
+  ['SAT','var(--teal)','Change-detection scan: no new growth at Koh Kong Coast'],
+  ['COR','#C084FC','Cross-source match — O\'Smach Border escalated to Critical'],
+  ['SYS','var(--muted)','Score decay check complete — no expirations'],
+];
+let fi = 0;
+function pushFeed(){
+  const feed = document.getElementById('feed');
+  const [tag,color,text] = feedEvents[fi % feedEvents.length];
+  const now = new Date().toLocaleTimeString('en-GB');
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `<span class="t">${now}</span><span class="tag mono" style="color:${color};background:${color}22">${tag}</span>${text}`;
+  feed.prepend(item);
+  while(feed.children.length>6) feed.removeChild(feed.lastChild);
+  fi++;
+}
+ 
+/* ---------- CLOCK ---------- */
+let seconds=0;
+setInterval(()=>{
+  seconds++;
+  const h=String(Math.floor(seconds/3600)).padStart(2,'0');
+  const m=String(Math.floor((seconds%3600)/60)).padStart(2,'0');
+  const s=String(seconds%60).padStart(2,'0');
+  document.getElementById('clock').textContent = `UPTIME ${h}:${m}:${s}`;
+}, 1000);
+ 
+setInterval(pushFeed, 2800);
+ 
+/* ---------- INIT ---------- */
+renderQueue();
+renderDetail();
+renderMap();
+pushFeed();
+</script>
+</body>
+</html>
+ 
